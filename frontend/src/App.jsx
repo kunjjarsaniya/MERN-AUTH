@@ -13,6 +13,8 @@ import ToastContainer from "./components/ToastContainer";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
 
+import Error from "./pages/Error";
+
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
 	const { isAuthenticated, user } = useAuthStore();
@@ -58,6 +60,7 @@ function App() {
 			<FloatingShape color='bg-lime-500' size='w-32 h-32' top='40%' left='-10%' delay={2} />
 
 			<Routes>
+				<Route path="*" element={<Error />} />
 				<Route
 					path='/'
 					element={

@@ -1,15 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
-import toast from "react-hot-toast";
+import useToast from "../utils/toast";
+import { Loader } from "lucide-react";
 
 const EmailVerificationPage = () => {
 	const [code, setCode] = useState(["", "", "", "", "", ""]);
 	const inputRefs = useRef([]);
 	const navigate = useNavigate();
+	const location = useLocation();
+	const { showError, showSuccess, showWelcomeMessage } = useToast();
 
 	const { error, isLoading, verifyEmail } = useAuthStore();
+
+	// Auto-fill code from location state if available
+	useEffect(() => {
+		if (location.state?.verificationCode) {
+			const codeArray = location.state.verificationCode.split('').slice(0, 6);
+			const newCode = [...Array(6)].map((_, i) => codeArray[i] || '');
+			setCode(newCode);
+		}
+	}, [location.state]);
 
 	const handleChange = (index, value) => {
 		const newCode = [...code];
@@ -46,12 +58,20 @@ const EmailVerificationPage = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		const verificationCode = code.join("");
+		if (verificationCode.length !== 6) {
+			showError("Please enter a 6-digit verification code");
+			return;
+		}
+
 		try {
-			await verifyEmail(verificationCode);
-			navigate("/");
-			toast.success("Email verified successfully");
+			const user = await verifyEmail(verificationCode);
+			// Show welcome message with user's name
+			showWelcomeMessage(user.name || user.email);
+			setTimeout(() => {
+				navigate("/");
+			}, 1500); // Give time to see the welcome message
 		} catch (error) {
-			console.log(error);
+			showError(error.message || "Failed to verify email");
 		}
 	};
 
@@ -62,13 +82,22 @@ const EmailVerificationPage = () => {
 		}
 	}, [code]);
 
+	
+	if (isLoading) {
+		return (
+			<div className='min-h-screen flex items-center justify-center'>
+				<Loader className='animate-spin h-12 w-12 text-emerald-500' />
+			</div>
+		);
+	}
+
 	return (
-		<div className='max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden'>
+		<div className="min-h-screen flex items-center justify-center p-4">
 			<motion.div
-				initial={{ opacity: 0, y: -50 }}
+				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ duration: 0.5 }}
-				className='bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-md'
+				className='w-full max-w-md bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl p-8'
 			>
 				<h2 className='text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text'>
 					Verify Your Email
@@ -76,29 +105,38 @@ const EmailVerificationPage = () => {
 				<p className='text-center text-gray-300 mb-6'>Enter the 6-digit code sent to your email address.</p>
 
 				<form onSubmit={handleSubmit} className='space-y-6'>
-					<div className='flex justify-between'>
+					<div className='flex justify-between gap-2'>
 						{code.map((digit, index) => (
 							<input
 								key={index}
 								ref={(el) => (inputRefs.current[index] = el)}
 								type='text'
-								maxLength='6'
+								inputMode='numeric'
+								pattern='[0-9]*'
+								maxLength={1}
 								value={digit}
 								onChange={(e) => handleChange(index, e.target.value)}
 								onKeyDown={(e) => handleKeyDown(index, e)}
-								className='w-12 h-12 text-center text-2xl font-bold bg-gray-700 text-white border-2 border-gray-600 rounded-lg focus:border-green-500 focus:outline-none'
+								className='w-12 h-12 text-center text-2xl font-bold bg-gray-700 text-white border-2 border-gray-600 rounded-lg focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50'
 							/>
 						))}
 					</div>
-					{error && <p className='text-red-500 font-semibold mt-2'>{error}</p>}
+					{error && <p className='text-red-500 font-semibold mt-2 text-center'>{error}</p>}
 					<motion.button
-						whileHover={{ scale: 1.05 }}
-						whileTap={{ scale: 0.95 }}
+						whileHover={{ scale: 1.03 }}
+						whileTap={{ scale: 0.98 }}
 						type='submit'
 						disabled={isLoading || code.some((digit) => !digit)}
-						className='w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50'
+						className='w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:opacity-50 transition-colors duration-200'
 					>
-						{isLoading ? "Verifying..." : "Verify Email"}
+						{isLoading ? (
+							<span className='flex items-center justify-center'>
+								<Loader className='animate-spin h-5 w-5 mr-2' />
+								Verifying...
+							</span>
+						) : (
+							"Verify Email"
+						)}
 					</motion.button>
 				</form>
 			</motion.div>

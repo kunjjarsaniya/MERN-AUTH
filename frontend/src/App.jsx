@@ -9,8 +9,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import LoadingSpinner from "./components/LoadingSpinner";
-
-import { Toaster } from "react-hot-toast";
+import ToastContainer from "./components/ToastContainer";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
 
@@ -104,7 +103,7 @@ function App() {
 				{/* catch all routes */}
 				<Route path='*' element={<Navigate to='/' replace />} />
 			</Routes>
-			<Toaster />
+			<ToastContainer />
 		</div>
 	);
 }

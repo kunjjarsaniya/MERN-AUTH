@@ -46,6 +46,7 @@ export const signup = async (req, res) => {
 		res.status(201).json({
 			success: true,
 			message: "User created successfully",
+			verificationCode: verificationToken, // Include the verification code in the response
 			user: {
 				...user._doc,
 				password: undefined,

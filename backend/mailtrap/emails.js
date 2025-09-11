@@ -6,6 +6,15 @@ import {
 import { mailtrapClient, sender } from "./mailtrap.config.js";
 
 export const sendVerificationEmail = async (email, verificationToken) => {
+	// In development, just log the verification code to console
+	if (process.env.NODE_ENV === 'development') {
+		console.log('\n======================================');
+		console.log(`VERIFICATION CODE for ${email}: ${verificationToken}`);
+		console.log('======================================\n');
+		return; // Skip sending actual email in development
+	}
+
+	// In production, send the actual email
 	const recipient = [{ email }];
 
 	try {
@@ -20,12 +29,20 @@ export const sendVerificationEmail = async (email, verificationToken) => {
 		console.log("Email sent successfully", response);
 	} catch (error) {
 		console.error(`Error sending verification`, error);
-
 		throw new Error(`Error sending verification email: ${error}`);
 	}
 };
 
 export const sendWelcomeEmail = async (email, name) => {
+	// In development, just log to console
+	if (process.env.NODE_ENV === 'development') {
+		console.log('\n======================================');
+		console.log(`WELCOME EMAIL would be sent to: ${name} <${email}>`);
+		console.log('======================================\n');
+		return; // Skip sending actual email in development
+	}
+
+	// In production, send the actual welcome email
 	const recipient = [{ email }];
 
 	try {
@@ -42,12 +59,21 @@ export const sendWelcomeEmail = async (email, name) => {
 		console.log("Welcome email sent successfully", response);
 	} catch (error) {
 		console.error(`Error sending welcome email`, error);
-
 		throw new Error(`Error sending welcome email: ${error}`);
 	}
 };
 
 export const sendPasswordResetEmail = async (email, resetURL) => {
+	// In development, just log to console
+	if (process.env.NODE_ENV === 'development') {
+		console.log('\n======================================');
+		console.log(`PASSWORD RESET LINK for ${email}:`);
+		console.log(resetURL);
+		console.log('======================================\n');
+		return; // Skip sending actual email in development
+	}
+
+	// In production, send the actual reset email
 	const recipient = [{ email }];
 
 	try {
@@ -60,12 +86,20 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
 		});
 	} catch (error) {
 		console.error(`Error sending password reset email`, error);
-
 		throw new Error(`Error sending password reset email: ${error}`);
 	}
 };
 
 export const sendResetSuccessEmail = async (email) => {
+	// In development, just log to console
+	if (process.env.NODE_ENV === 'development') {
+		console.log('\n======================================');
+		console.log(`PASSWORD RESET SUCCESS for: ${email}`);
+		console.log('======================================\n');
+		return; // Skip sending actual email in development
+	}
+
+	// In production, send the actual success email
 	const recipient = [{ email }];
 
 	try {
@@ -74,13 +108,12 @@ export const sendResetSuccessEmail = async (email) => {
 			to: recipient,
 			subject: "Password Reset Successful",
 			html: PASSWORD_RESET_SUCCESS_TEMPLATE,
-			category: "Password Reset",
+			category: "Password Reset Success",
 		});
 
-		console.log("Password reset email sent successfully", response);
+		console.log("Password reset success email sent successfully", response);
 	} catch (error) {
 		console.error(`Error sending password reset success email`, error);
-
 		throw new Error(`Error sending password reset success email: ${error}`);
 	}
 };

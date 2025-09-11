@@ -17,9 +17,15 @@ export const useAuthStore = create((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			const response = await axios.post(`${API_URL}/signup`, { email, password, name });
-			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
+			// Don't set as authenticated yet - wait for email verification
+			set({ user: { ...response.data.user, isVerified: false }, isLoading: false });
+			// Return the verification code and user data
+			return { 
+				verificationCode: response.data.verificationCode,
+				user: response.data.user
+			};
 		} catch (error) {
-			set({ error: error.response.data.message || "Error signing up", isLoading: false });
+			set({ error: error.response?.data?.message || "Error signing up", isLoading: false });
 			throw error;
 		}
 	},
@@ -53,10 +59,17 @@ export const useAuthStore = create((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			const response = await axios.post(`${API_URL}/verify-email`, { code });
-			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
-			return response.data;
+			const user = response.data.user;
+			set({
+				user: user,
+				isAuthenticated: true,
+				isLoading: false,
+				error: null,
+			});
+			// Return user data to show welcome message
+			return user;
 		} catch (error) {
-			set({ error: error.response.data.message || "Error verifying email", isLoading: false });
+			set({ error: error.response?.data?.message || "Error verifying email", isLoading: false });
 			throw error;
 		}
 	},

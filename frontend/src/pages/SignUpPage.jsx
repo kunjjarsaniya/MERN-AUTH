@@ -1,27 +1,45 @@
 import { motion } from "framer-motion";
 import Input from "../components/Input";
 import { Loader, Lock, Mail, User } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import PasswordStrengthMeter from "../components/PasswordStrengthMeter";
 import { useAuthStore } from "../store/authStore";
+import useToast from "../utils/toast";
 
 const SignUpPage = () => {
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
+	const location = useLocation();
+	const { showVerificationCode, showWelcomeMessage } = useToast();
 
 	const { signup, error, isLoading } = useAuthStore();
+
+	useEffect(() => {
+		// Check for verification code in location state
+		if (location.state?.verificationCode) {
+			showVerificationCode(location.state.email, location.state.verificationCode);
+		}
+	}, [location.state, showVerificationCode]);
 
 	const handleSignUp = async (e) => {
 		e.preventDefault();
 
 		try {
-			await signup(email, password, name);
-			navigate("/verify-email");
+			const response = await signup(email, password, name);
+			if (response?.verificationCode) {
+				showVerificationCode(email, response.verificationCode);
+			}
+			navigate("/verify-email", { 
+				state: { 
+					email,
+					verificationCode: response?.verificationCode 
+				}
+			});
 		} catch (error) {
-			console.log(error);
+			console.error('Signup error:', error);
 		}
 	};
 	return (
